@@ -1,0 +1,40 @@
+{
+  "syntax_highlighting": {
+    "color_capability_check": {
+      "min_colors": 8,
+      "required_pairs": 8,
+      "fallback_monochrome": true
+    },
+    "color_pairs": {
+      "OPERATOR": {"id": 1, "fg": "red", "hex": "#FF4444"},
+      "LOGICAL": {"id": 2, "fg": "magenta", "hex": "#FF66B2"},
+      "FUNCTION": {"id": 3, "fg": "yellow", "hex": "#FFD700"},
+      "KEYWORD": {"id": 4, "fg": "magenta", "hex": "#AA66CC"},
+      "STRING": {"id": 5, "fg": "green", "hex": "#44AA44"},
+      "TEMPLATE": {"id": 6, "fg": "green", "hex": "#2E8B57"},
+      "COMMENT": {"id": 7, "fg": "white", "hex": "#888888"},
+      "NUMBER": {"id": 8, "fg": "blue", "hex": "#4444FF"}
+    },
+    "token_patterns": {
+      "operators": ["+", "-", "*", "/", "=", "%", "++", "--", "+=", "-=", "*=", "/="],
+      "logical": ["==", "!=", "&&", "||", "<", ">", "<=", ">=", "!"],
+      "keywords": ["if", "else", "while", "for", "return", "void", "int", "char", "float", "double"],
+      "string_delimiters": ["\"", "'", "`"],
+      "function_indicators": ["def", "function", "void", "int", "char"]
+    },
+    "language_specific": {
+      "c_cpp": {
+        "preprocessor": {"color": "cyan", "pair_id": 9},
+        "keywords": ["if", "else", "while", "for", "return", "void", "int", "char", "struct"]
+      },
+      "python": {
+        "keywords": ["def", "if", "else", "while", "for", "return", "class"],
+        "f_strings": {"placeholder_color": 6}
+      },
+      "javascript": {
+        "keywords": ["function", "if", "else", "while", "for", "return"],
+        "template_strings": {"placeholder_color": 6}
+      }
+    }
+  }
+}

@@ -1,0 +1,182 @@
+#include <ncurses.h>
+#include <string.h>
+#include <ctype.h>
+
+typedef struct {
+    int pair_id;
+    int color_code;
+    const char* description;
+} color_pair_t;
+
+// Color configuration
+color_pair_t color_pairs[] = {
+    {1, COLOR_RED,     "Operators"},
+    {2, COLOR_MAGENTA, "Logical Operators"},
+    {3, COLOR_YELLOW,  "Functions"},
+    {4, COLOR_MAGENTA, "Keywords"},
+    {5, COLOR_GREEN,   "Strings"},
+    {6, COLOR_GREEN,   "Template Placeholders"},
+    {7, COLOR_WHITE,   "Comments"},
+    {8, COLOR_BLUE,    "Numbers"},
+    {0, 0, NULL} // Sentinel
+};
+
+// Check terminal color capabilities
+int init_color_support() {
+    if (!has_colors()) {
+        printw("Terminal does not support colors. Using monochrome mode.\n");
+        refresh();
+        return 0;
+    }
+    
+    start_color();
+    
+    // Check if terminal can change colors
+    if (can_change_color()) {
+        // Custom color definitions for better matching
+        init_color(COLOR_RED,     1000, 267, 267);   // #FF4444
+        init_color(COLOR_MAGENTA, 1000, 400, 698);   // #FF66B2
+        init_color(COLOR_YELLOW,  1000, 843, 0);     // #FFD700
+        init_color(COLOR_GREEN,   267,  667, 267);   // #44AA44
+        init_color(COLOR_BLUE,    267,  267, 1000);  // #4444FF
+        init_color(COLOR_WHITE,   533,  533, 533);   // #888888
+    }
+    
+    // Initialize color pairs
+    for (int i = 0; color_pairs[i].pair_id != 0; i++) {
+        init_pair(color_pairs[i].pair_id, color_pairs[i].color_code, COLOR_BLACK);
+    }
+    
+    return 1;
+}
+
+// Apply syntax highlighting based on token type
+void apply_syntax_highlight(int pair_id) {
+    if (pair_id > 0) {
+        attron(COLOR_PAIR(pair_id));
+    } else {
+        attroff(A_COLOR); // Default color
+    }
+}
+
+// Token classification function
+int classify_token(const char* token, int in_function_scope, int in_string) {
+    if (in_string) {
+        // Check for template placeholders within strings
+        if (strstr(token, "${") || strstr(token, "{}")) {
+            return 6; // Template placeholder
+        }
+        return 5; // Regular string
+    }
+    
+    // Operator detection
+    const char* operators[] = {"+", "-", "*", "/", "=", "%", "++", "--", NULL};
+    for (int i = 0; operators[i] != NULL; i++) {
+        if (strcmp(token, operators[i]) == 0) return 1;
+    }
+    
+    // Logical operator detection
+    const char* logicals[] = {"==", "!=", "&&", "||", "<", ">", "<=", ">=", "!", NULL};
+    for (int i = 0; logicals[i] != NULL; i++) {
+        if (strcmp(token, logicals[i]) == 0) return 2;
+    }
+    
+    // Keyword detection
+    const char* keywords[] = {"if", "else", "while", "for", "return", "void", "int", NULL};
+    for (int i = 0; keywords[i] != NULL; i++) {
+        if (strcmp(token, keywords[i]) == 0) return 4;
+    }
+    
+    // Function detection
+    if (in_function_scope) return 3;
+    
+    // Number detection
+    int is_number = 1;
+    for (size_t i = 0; i < strlen(token); i++) {
+        if (!isdigit(token[i]) && token[i] != '.' && token[i] != 'x') {
+            is_number = 0;
+            break;
+        }
+    }
+    if (is_number) return 8;
+    
+    return 0; // Default color
+}
+
+// Display color capabilities
+void show_color_capabilities() {
+    printw("Color capabilities:\n");
+    printw("- Has colors: %s\n", has_colors() ? "YES" : "NO");
+    printw("- Can change colors: %s\n", can_change_color() ? "YES" : "NO");
+    printw("- Color pairs: %d\n", COLOR_PAIRS);
+    printw("- Colors: %d\n", COLORS);
+    printw("\n");
+    
+    // Show available color pairs
+    printw("Available syntax highlighting:\n");
+    for (int i = 0; color_pairs[i].pair_id != 0; i++) {
+        attron(COLOR_PAIR(color_pairs[i].pair_id));
+        printw("  Pair %d: %s\n", color_pairs[i].pair_id, color_pairs[i].description);
+        attroff(COLOR_PAIR(color_pairs[i].pair_id));
+    }
+    refresh();
+}
+ 
+// Main example usage
+int example() {
+    initscr();
+    
+    int has_color = init_color_support();
+    
+    if (has_color) {
+        show_color_capabilities();
+        
+        // Example: Display different token types
+        printw("\nExample highlighted code:\n");
+        
+        // Function definition (yellow)
+        apply_syntax_highlight(3);
+        printw("void lexer_skip_whitespace");
+        apply_syntax_highlight(0);
+        printw("(");
+        apply_syntax_highlight(3);
+        printw("lexer_T* lexer");
+        apply_syntax_highlight(0);
+        printw(")\n");
+        
+        // Braces (function scope - yellow)
+        apply_syntax_highlight(3);
+        printw("{\n    ");
+        apply_syntax_highlight(0);
+        
+        // Keyword (purple)
+        apply_syntax_highlight(4);
+        printw("while");
+        apply_syntax_highlight(0);
+        printw(" (");
+        
+        // Logical operator (pink)
+        apply_syntax_highlight(2);
+        printw("lexer->c != '\\0'");
+        apply_syntax_highlight(0);
+        printw(")\n    ");
+        
+        // String (green)
+        apply_syntax_highlight(5);
+        printw("char* msg = \"Hello World\";");
+        apply_syntax_highlight(0);
+        printw("\n");
+        
+        // Function close brace (yellow)
+        apply_syntax_highlight(3);
+        printw("}");
+        apply_syntax_highlight(0);
+    }
+    
+    printw("\n\nPress any key to exit...");
+    refresh();
+    getch();
+    
+    endwin();
+    return 0;
+}

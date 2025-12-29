@@ -1,0 +1,9 @@
+##directories 
+*env/
+bin/
+obj/
+*lab/ 
+## files
+compile_commands*
+*.out
+*__help*
