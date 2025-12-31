@@ -24,7 +24,6 @@
 class tml_render
 {
 private:
-    vector<tml_token_struct> tokens;
     WINDOW* win;
     string processed_string;
 
