@@ -1,3 +1,21 @@
+/** ./methods.cpp
+ *  Copyright (C) 2024  Joseph Wangai Mwaniki joewamwaniki@gmail.com
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+
 #include "methods.hpp"
 
 void view_when_error(WINDOW* win)
@@ -16,7 +34,7 @@ void view_when_error(WINDOW* win)
 void glimpse_inside(WINDOW* win,string filepath)
 {
     fs::path inode(filepath);
-    //wprintw(win,"here");
+    wprintw(win,"here");
     box(win,0,0);
     if (!fs::exists(inode))
     {
@@ -33,6 +51,8 @@ void glimpse_inside(WINDOW* win,string filepath)
         glimpse_inside_of_text_file(win,filepath);
         return;
     }
+
+    wrefresh(win);
 }
 
 void glimpse_inside_of_text_file(WINDOW* win,string filepath)
@@ -42,10 +62,7 @@ void glimpse_inside_of_text_file(WINDOW* win,string filepath)
     ifstream text_file(filepath);
     bool file_is_printable = true;
     string line;
-    if (!text_file.is_open())
-    {
-        file_is_printable = false;
-    }
+    file_is_printable = (text_file.is_open())? true :false;
     
     if (file_is_printable)
     {

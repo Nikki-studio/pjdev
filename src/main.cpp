@@ -1,6 +1,23 @@
+/** main.cpp
+ *  Copyright (C) 2024  Joseph Wangai Mwaniki joewamwaniki@gmail.com
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+
+
 #include "tml_render.hpp"
-
-
 
 void init_colors()
 {
@@ -67,21 +84,12 @@ int main(int argc, char* argv[])
 
     WINDOW* win_ = newwin(20,35,10,10);
     refresh();
-    tml_render render(win_,"name: %s, age: %i.","Joe",19);
-    render.render();
-
+    // tml_render render(win_,"name: %s, age: %i.","Joe",19);
+    // render.render();
+    glimpse_inside(win_,".");
+    wrefresh(win_);
     getch();
+    delwin(win_);
     endwin();
     return 0;
 }
-                 
-
-    
-    /*
-    WINDOW* win = newwin(20,35,10,10);
-    init_colors();
-    refresh();
-    glimpse_inside(win,"/");
-    wrefresh(win);
-    getch();
-    delwin(win);    */
