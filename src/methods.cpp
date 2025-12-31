@@ -72,7 +72,7 @@ void glimpse_inside_of_text_file(WINDOW* win,string filepath)
             string line_printable = line.substr(0,(size_t)(max_width-2));
             if (line_printable.length()<line.length())
             {
-                line_printable[line_printable.length()-1] = '<';
+                line_printable[line_printable.length()-1] = '\\';
             }
             mvwprintw(win,line_no,1,"%s",line_printable.c_str());
             if (line_no>=max_height-2)

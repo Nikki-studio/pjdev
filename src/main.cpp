@@ -18,7 +18,7 @@
 
 
 #include "tml_render.hpp"
-
+    
 void init_colors()
 {
     // First 8 standard colors
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
     refresh();
     // tml_render render(win_,"name: %s, age: %i.","Joe",19);
     // render.render();
-    glimpse_inside(win_,".");
+    glimpse_inside(win_,"README.md");
     wrefresh(win_);
     getch();
     delwin(win_);
