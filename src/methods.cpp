@@ -128,6 +128,13 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
     bool is_focused_in_dir = true;
     int c;
     vector<string> filepaths;
+    fs::path directory(filepath);
+    if (!fs::is_directory(directory)) directory = directory.parent_path();
+    auto it = fs::directory_iterator(directory,fs::directory_options::none);
+    for (auto& entry:it)
+        filepaths.push_back(entry.path().filename().string());
+    _inodes = (filepaths.size() < max_inodes)? filepaths.size():max_inodes;
+
     // ----- reserved -----
     while (is_focused_in_dir)
     {
