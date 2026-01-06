@@ -82,14 +82,36 @@ int main(int argc, char* argv[])
     }
     init_colors();
 
-    WINDOW* win_ = newwin(20,35,10,10);
+    noecho();
+    keypad(stdscr,TRUE);
+    raw();
+    halfdelay(4);
+    string filepath(".");
+    // ----- reserved -----
+    WINDOW* dir = newwin(20,35,10,10);
+    WINDOW* view = newwin(20,35,10,45);
     refresh();
-    // tml_render render(win_,"name: %s, age: %i.","Joe",19);
-    // render.render();
-    glimpse_inside(win_,"README.md");
-    wrefresh(win_);
+    // ----- reserved -----
+  
+    browse_in_current_directory(dir,view,filepath);
     getch();
-    delwin(win_);
+
+
+    // ----- reserved -----
+    delwin(dir);
+    delwin(view);
     endwin();
     return 0;
+    // ----- reserved ----- 
 }
+
+
+
+
+/*
+// special chars
+/// continuation
+// ⤷ ⮩ ⮱ 
+/// current line
+// ⮚ 🠊 🠲 🠶 🡆 🡪 🢒 🢥 🢚 ➙ 
+*/

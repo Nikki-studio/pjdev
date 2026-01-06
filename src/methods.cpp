@@ -31,7 +31,7 @@ void view_when_error(WINDOW* win)
             }
 }
 
-void glimpse_inside(WINDOW* win,string filepath)
+void glimpse_inside(WINDOW* win,string& filepath)
 {
     fs::path inode(filepath);
     wprintw(win,"here");
@@ -55,7 +55,7 @@ void glimpse_inside(WINDOW* win,string filepath)
     wrefresh(win);
 }
 
-void glimpse_inside_of_text_file(WINDOW* win,string filepath)
+void glimpse_inside_of_text_file(WINDOW* win,string& filepath)
 {
     unsigned int max_height, max_width;
     getmaxyx(win,max_height,max_width);
@@ -92,7 +92,7 @@ void glimpse_inside_of_text_file(WINDOW* win,string filepath)
     text_file.close();
 }
 
-void glimpse_inside_of_directory(WINDOW* win,string filepath)
+void glimpse_inside_of_directory(WINDOW* win,string& filepath)
 {
     //mvwprintw(win,1,1,"This is a directory");
     unsigned int  max_height, max_width,height = 1,width;
@@ -107,3 +107,106 @@ void glimpse_inside_of_directory(WINDOW* win,string filepath)
         height++;
     }
 }
+ 
+void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
+{
+    // p for parent, q for quit,r for read, a for autoread toggle,
+    // arrowkeys for dir navigation
+    // ----- reserved -----
+    box(dir,0,0);
+    box(view,0,0);
+    unsigned int  max_height, max_width;
+    getmaxyx(dir,max_height,max_width);
+    unsigned int 
+        height,
+        width,
+        highlighted_file = 3,
+        starting_at = 0,
+        _inodes,
+        max_inodes=(max_height-2);
+
+    bool is_focused_in_dir = true;
+    int c;
+    vector<string> filepaths;
+    // ----- reserved -----
+    while (is_focused_in_dir)
+    {
+        // ----- keycheck -----
+        c = getch();
+        switch (tolower(c))
+        {
+            case 'q':
+                {
+                    is_focused_in_dir = false;
+                }
+                break;
+            
+                // ----- arrow keys -----
+            case KEY_UP:
+                {
+                    if (highlighted_file > 0) highlighted_file--;
+                }
+                break;
+            
+            case KEY_DOWN:
+                {
+                    if (highlighted_file <= max_inodes) highlighted_file++;
+                }
+                break;
+            
+            case KEY_LEFT:
+                {
+                }
+                break;
+            
+            case KEY_RIGHT:
+                {
+                }
+                break;
+            
+            default:
+                break;
+        }
+        // ----- keycheck -----
+        
+        // ----- directories -----
+        for (size_t index(0);index < _inodes;index++)
+        {
+            if (index < starting_at) continue;
+            if (index == highlighted_file)
+            {
+                wattron(dir,COLOR_PAIR(CYAN_PAIR));
+                wattron(dir,A_BOLD);
+                mvwprintw(dir,index,2,"%s",filepaths[index].c_str());
+                wattroff(dir,A_BOLD);
+                wattroff(dir,COLOR_PAIR(CYAN_PAIR));
+            }
+            else
+                mvwprintw(dir,index,2,"%s",filepaths[index].c_str());
+        }
+        wclear(dir);
+        wclear(view);
+    
+        // ----- directories -----
+        // ----- reserved -----
+        fs::path directory(filepath);
+        if (!fs::is_directory(directory)) directory = directory.parent_path();
+        auto it = fs::directory_iterator(directory,fs::directory_options::none);
+
+        for (auto& entry:it)
+            filepaths.push_back(entry.path().filename().string());
+        _inodes = (filepaths.size() < max_inodes)? filepaths.size():max_inodes;
+        box(dir,0,0);
+        box(view,0,0);
+        wrefresh(dir);
+        wrefresh(view);
+        // ----- reserved -----
+    }
+}
+
+void browse_in_current_file(WINDOW* win,string& filepath)
+{
+    // q for quit
+    // i,j,k,l for view navigation
+}
+
