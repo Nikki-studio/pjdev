@@ -26,5 +26,4 @@ void glimpse_inside_of_directory(WINDOW* win,string& filepath);
 
 void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath);
 void browse_in_current_file(WINDOW* win,string& filepath);
-
 #endif // METHODS_HPP_INCLUDED

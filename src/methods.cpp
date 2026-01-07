@@ -15,7 +15,6 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-
 #include "methods.hpp"
 
 void view_when_error(WINDOW* win)
@@ -38,7 +37,11 @@ void glimpse_inside(WINDOW* win,string& filepath)
     box(win,0,0);
     if (!fs::exists(inode))
     {
+        wattron(win,COLOR_PAIR(RED_PAIR));
         view_when_error(win);
+        mvwprintw(win,0,3,"%s",filepath.c_str());
+        wattroff(win,COLOR_PAIR(RED_PAIR));
+        wrefresh(win);
     }
 
     if (fs::is_directory(inode))
@@ -110,7 +113,7 @@ void glimpse_inside_of_directory(WINDOW* win,string& filepath)
  
 void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
 {
-    // p for parent, q for quit,r for read, a for autoread toggle,
+    // p for parent, q for quit,enter for read or traverse, a for autoread toggle, r for new refresh
     // arrowkeys for dir navigation
     // ----- reserved -----
     box(dir,0,0);
@@ -118,27 +121,98 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
     unsigned int  max_height, max_width;
     getmaxyx(dir,max_height,max_width);
     unsigned int 
-        height,
-        width,
+        height = max_height -2,
+        width = max_width -2,
         highlighted_file = 3,
         starting_at = 0,
-        _inodes,
-        max_inodes=(max_height-2);
+        max_displayable = height;
 
     bool is_focused_in_dir = true;
+    bool auto_read = true;
     int c;
     vector<string> filepaths;
-    fs::path directory(filepath);
-    if (!fs::is_directory(directory)) directory = directory.parent_path();
-    auto it = fs::directory_iterator(directory,fs::directory_options::none);
-    for (auto& entry:it)
-        filepaths.push_back(entry.path().filename().string());
-    _inodes = (filepaths.size() < max_inodes)? filepaths.size():max_inodes;
+    vector<bool> is_directory;
 
+    directories:
+    fs::path current_path(filepath);
+    if (!fs::is_directory(current_path))
+        current_path = current_path.parent_path();
+    
+    filepath = current_path.string();
+
+    if (current_path.has_parent_path() )//&& current_path != current_path.root_path())
+    {
+        filepaths.push_back("..");
+        is_directory.push_back(true);
+    }
+    
+    try
+    {
+        for (const auto& entry:fs::directory_iterator(current_path,fs::directory_options::skip_permission_denied))
+        {
+            filepaths.push_back(entry.path().filename().string());
+            is_directory.push_back(entry.is_directory());
+        }
+    }
+    catch (const fs::filesystem_error& e)
+    {
+        wattron(dir,COLOR_PAIR(RED_PAIR));
+        mvwprintw(dir, 1,2,"Error in reading directory.");
+        wattroff(dir,COLOR_PAIR(RED_PAIR));
+        wrefresh(dir);
+        return;
+    }
+    int total_files = filepaths.size();
     // ----- reserved -----
     while (is_focused_in_dir)
     {
         // ----- keycheck -----
+        werase(dir);
+        werase(view);
+        box(dir,0,0);
+        box(view,0,0);
+        if (highlighted_file >= total_files && total_files > 0)
+            highlighted_file = total_files -1;
+        if (highlighted_file < starting_at)
+            starting_at = highlighted_file;
+        else if (highlighted_file >= starting_at + max_displayable)
+            starting_at = highlighted_file - max_displayable + 1;
+        int display_index = 0;
+        for (size_t i = starting_at;
+            i < filepaths.size() && display_index < max_displayable;
+            i++,display_index++)
+        {
+            int y_pos = display_index + 1;
+
+            if (i == highlighted_file)
+            {
+                wattron(dir, COLOR_PAIR(MAGENTA_PAIR) | A_BOLD );
+                mvwprintw(dir,y_pos,2,"%s",filepaths[i].c_str());
+                wattroff(dir, COLOR_PAIR(MAGENTA_PAIR) | A_BOLD);
+            }
+            else
+            {
+                if (is_directory[i])
+                {
+                    wattron(dir, COLOR_PAIR(GREEN_PAIR) );
+                    mvwprintw(dir,y_pos,2,"%s",filepaths[i].c_str());
+                    wattroff(dir, COLOR_PAIR(GREEN_PAIR));
+                }
+                else
+                    mvwprintw(dir,y_pos,2,"%s",filepaths[i].c_str());
+            }
+        }
+        if (auto_read)
+        {
+            fs::path file_to_read(current_path);
+            if (filepaths[highlighted_file]=="..")
+                file_to_read = file_to_read.parent_path();
+            else file_to_read /= filepaths[highlighted_file];
+            string file_path_to_read(file_to_read.string());
+            glimpse_inside(view,file_path_to_read);
+        }
+        wrefresh(dir);
+        wrefresh(view);
         c = getch();
         switch (tolower(c))
         {
@@ -149,25 +223,57 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
                 break;
             
                 // ----- arrow keys -----
+            case KEY_LEFT:
             case KEY_UP:
                 {
                     if (highlighted_file > 0) highlighted_file--;
                 }
                 break;
             
+            case KEY_RIGHT:
             case KEY_DOWN:
                 {
-                    if (highlighted_file <= max_inodes) highlighted_file++;
+                    if (highlighted_file <= filepaths.size()-1) highlighted_file++;
                 }
                 break;
             
-            case KEY_LEFT:
+            case 'p':
                 {
+                    if (current_path.has_parent_path())
+                    {
+                        current_path = current_path.parent_path();
+                        filepath = current_path.string();
+                        filepaths.clear();
+                        is_directory.clear();
+                        goto directories;
+                    }
                 }
                 break;
             
-            case KEY_RIGHT:
+            case 10: // newline -- read or traverse
                 {
+                    if (filepaths[highlighted_file]=="..")
+                        current_path = current_path.parent_path();
+                    else current_path /= filepaths[highlighted_file];
+                    filepath = current_path.string();
+                    if (!is_directory[highlighted_file])
+                    {
+                        browse_in_current_file(view,filepath);
+                        break;
+                    }
+                }
+            
+            case 'r': // refresh
+                {
+                    if (!filepaths.empty()) filepaths.clear();
+                    if (!is_directory.empty()) is_directory.clear();
+                        goto directories;
+                }
+                break;
+            
+            case 'a': // toggle autoread on or off
+                {
+                    auto_read = !auto_read;
                 }
                 break;
             
@@ -176,38 +282,6 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
         }
         // ----- keycheck -----
         
-        // ----- directories -----
-        for (size_t index(0);index < _inodes;index++)
-        {
-            if (index < starting_at) continue;
-            if (index == highlighted_file)
-            {
-                wattron(dir,COLOR_PAIR(CYAN_PAIR));
-                wattron(dir,A_BOLD);
-                mvwprintw(dir,index,2,"%s",filepaths[index].c_str());
-                wattroff(dir,A_BOLD);
-                wattroff(dir,COLOR_PAIR(CYAN_PAIR));
-            }
-            else
-                mvwprintw(dir,index,2,"%s",filepaths[index].c_str());
-        }
-        wclear(dir);
-        wclear(view);
-    
-        // ----- directories -----
-        // ----- reserved -----
-        fs::path directory(filepath);
-        if (!fs::is_directory(directory)) directory = directory.parent_path();
-        auto it = fs::directory_iterator(directory,fs::directory_options::none);
-
-        for (auto& entry:it)
-            filepaths.push_back(entry.path().filename().string());
-        _inodes = (filepaths.size() < max_inodes)? filepaths.size():max_inodes;
-        box(dir,0,0);
-        box(view,0,0);
-        wrefresh(dir);
-        wrefresh(view);
-        // ----- reserved -----
     }
 }
 
