@@ -138,8 +138,10 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
     directories:
     fs::path current_path(filepath);
     if (!fs::is_directory(current_path))
-        current_path = current_path.parent_path();
+        current_path = fs::canonical(current_path.parent_path());
 
+        
+    filepath = current_path.string();
     filepath = current_path.string();
 
     if (current_path.has_parent_path() && current_path != current_path.root_path())
@@ -350,7 +352,7 @@ void browse_in_current_file(WINDOW* win,string& filepath)
 
 
             if (x_starting_at > 0 && !printable_buffer.empty())
-                printable_buffer[x_starting_at] = '/';
+                printable_buffer[0] = '/';
 
             if (x_starting_at+width < line_buffer.length() &&
                  !printable_buffer.empty())
@@ -361,7 +363,7 @@ void browse_in_current_file(WINDOW* win,string& filepath)
             {
                 mvwprintw(win,number_of_lines-y_starting_at,1,
                     "%s",printable_buffer.c_str());
-                if (length_of_largest_line<length_of_largest_visible_line)
+                if (length_of_largest_line>length_of_largest_visible_line)
                     length_of_largest_line = length_of_largest_visible_line;
             }
             number_of_lines++;
@@ -380,8 +382,20 @@ void browse_in_current_file(WINDOW* win,string& filepath)
             break;
             case 'k':
             {
-                if (y_starting_at+height+1<number_of_lines)
+                if (y_starting_at+height<number_of_lines)
                     y_starting_at++;
+            }
+            break;
+            case KEY_UP:
+            {
+                if (y_starting_at > height) y_starting_at -= height/3;
+                return;
+            }
+            break;
+            case KEY_DOWN:
+            {
+                if (y_starting_at+(height/3)<number_of_lines) y_starting_at +=  height/3;
+                return;
             }
             break;
             // ----- vertical -----
@@ -395,7 +409,7 @@ void browse_in_current_file(WINDOW* win,string& filepath)
             break;
             case 'l':
             {
-                if (x_starting_at+width+1<length_of_largest_visible_line)
+                //if (x_starting_at+width<length_of_largest_visible_line)
                     x_starting_at++;
             }
             break;
@@ -406,9 +420,31 @@ void browse_in_current_file(WINDOW* win,string& filepath)
                 return;
             }
             break;
+            case KEY_HOME:
+            {
+                x_starting_at = 0;
+                return;
+            }
+            break;
+            case KEY_END:
+            {
+                x_starting_at = length_of_largest_visible_line-5;
+                return;
+            }
+            break;
             default:break;
         }
         // ----- keys -----
     }
+    // ----- reserved -----
+    x_starting_at = 0;
+    y_starting_at = 0;
+    number_of_lines = 0;
+    length_of_largest_line = 0;
+    length_of_largest_visible_line = 0;
+    line_buffer.clear();
+    printable_buffer.clear();
+    // ----- reserved -----
 }
+
 
