@@ -164,7 +164,6 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
         mvwprintw(dir, 1,2,"Error in reading directory.");
         wattroff(dir,COLOR_PAIR(RED_PAIR));
         wrefresh(dir);
-        return;
     }
     int total_files = filepaths.size();
     // ----- reserved -----
@@ -212,8 +211,11 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
             if (filepaths[highlighted_file]=="..")
                 file_to_read = file_to_read.parent_path();
             else file_to_read /= filepaths[highlighted_file];
-            string file_path_to_read(file_to_read.string());
-            glimpse_inside(view,file_path_to_read);
+            if (fs::exists(file_to_read) && !fs::is_directory(file_to_read))
+            {
+                string file_path_to_read(file_to_read.string());
+                glimpse_inside(view,file_path_to_read);
+            }
         }
         wrefresh(dir);
         wrefresh(view);
@@ -306,7 +308,8 @@ void browse_in_current_file(WINDOW* win,string& filepath)
         x_starting_at = 0,
         y_starting_at = 0,
         number_of_lines,
-        length_of_largest_line;
+        length_of_largest_line,
+        length_of_largest_visible_line;
     string line_buffer,printable_buffer;
     int c;
     // ----- reserved -----
@@ -355,8 +358,12 @@ void browse_in_current_file(WINDOW* win,string& filepath)
 
             if (number_of_lines > y_starting_at &&
                  number_of_lines < y_starting_at+height)
+            {
                 mvwprintw(win,number_of_lines-y_starting_at,1,
                     "%s",printable_buffer.c_str());
+                if (length_of_largest_line<length_of_largest_visible_line)
+                    length_of_largest_line = length_of_largest_visible_line;
+            }
             number_of_lines++;
         }
         file_to_read.close();
@@ -373,7 +380,7 @@ void browse_in_current_file(WINDOW* win,string& filepath)
             break;
             case 'k':
             {
-                if (y_starting_at+height<number_of_lines-3) // 2 offset + 1 for allowance
+                if (y_starting_at+height+1<number_of_lines)
                     y_starting_at++;
             }
             break;
@@ -388,7 +395,7 @@ void browse_in_current_file(WINDOW* win,string& filepath)
             break;
             case 'l':
             {
-                if (x_starting_at+width<length_of_largest_line-3) // 2 offset + 1 for allowance
+                if (x_starting_at+width+1<length_of_largest_visible_line)
                     x_starting_at++;
             }
             break;
