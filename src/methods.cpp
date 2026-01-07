@@ -66,7 +66,7 @@ void glimpse_inside_of_text_file(WINDOW* win,string& filepath)
     bool file_is_printable = true;
     string line;
     file_is_printable = (text_file.is_open())? true :false;
-    
+
     if (file_is_printable)
     {
         unsigned int line_no = 1;
@@ -110,17 +110,19 @@ void glimpse_inside_of_directory(WINDOW* win,string& filepath)
         height++;
     }
 }
- 
+
 void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
 {
-    // p for parent, q for quit,enter for read or traverse, a for autoread toggle, r for new refresh
+    // p for parent, q for quit,enter for read or traverse
+    // a for autoread toggle, r for new refresh
     // arrowkeys for dir navigation
     // ----- reserved -----
+    curs_set(0);
     box(dir,0,0);
     box(view,0,0);
     unsigned int  max_height, max_width;
     getmaxyx(dir,max_height,max_width);
-    unsigned int 
+    unsigned int
         height = max_height -2,
         width = max_width -2,
         highlighted_file = 3,
@@ -137,18 +139,20 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
     fs::path current_path(filepath);
     if (!fs::is_directory(current_path))
         current_path = current_path.parent_path();
-    
+
     filepath = current_path.string();
 
-    if (current_path.has_parent_path() )//&& current_path != current_path.root_path())
+    if (current_path.has_parent_path() && current_path != current_path.root_path())
     {
         filepaths.push_back("..");
         is_directory.push_back(true);
     }
-    
+
     try
     {
-        for (const auto& entry:fs::directory_iterator(current_path,fs::directory_options::skip_permission_denied))
+        for (const auto& entry:fs::
+            directory_iterator(current_path,
+                fs::directory_options::skip_permission_denied))
         {
             filepaths.push_back(entry.path().filename().string());
             is_directory.push_back(entry.is_directory());
@@ -221,7 +225,7 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
                     is_focused_in_dir = false;
                 }
                 break;
-            
+
                 // ----- arrow keys -----
             case KEY_LEFT:
             case KEY_UP:
@@ -229,14 +233,14 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
                     if (highlighted_file > 0) highlighted_file--;
                 }
                 break;
-            
+
             case KEY_RIGHT:
             case KEY_DOWN:
                 {
                     if (highlighted_file <= filepaths.size()-1) highlighted_file++;
                 }
                 break;
-            
+
             case 'p':
                 {
                     if (current_path.has_parent_path())
@@ -249,7 +253,7 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
                     }
                 }
                 break;
-            
+
             case 10: // newline -- read or traverse
                 {
                     if (filepaths[highlighted_file]=="..")
@@ -258,11 +262,12 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
                     filepath = current_path.string();
                     if (!is_directory[highlighted_file])
                     {
+                        auto_read = false;
                         browse_in_current_file(view,filepath);
                         break;
                     }
                 }
-            
+
             case 'r': // refresh
                 {
                     if (!filepaths.empty()) filepaths.clear();
@@ -270,24 +275,133 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath)
                         goto directories;
                 }
                 break;
-            
+
             case 'a': // toggle autoread on or off
                 {
                     auto_read = !auto_read;
                 }
                 break;
-            
+
             default:
                 break;
         }
         // ----- keycheck -----
-        
     }
+    curs_set(1);
 }
 
 void browse_in_current_file(WINDOW* win,string& filepath)
 {
     // q for quit
     // i,j,k,l for view navigation
+    // ----- reserved -----
+    bool is_navigating = true;
+    unsigned int
+        max_width,
+        max_height;
+    getmaxyx(win,max_height,max_width);
+    unsigned int
+        height = max_height -2,
+        width = max_width - 2,
+        x_starting_at = 0,
+        y_starting_at = 0,
+        number_of_lines,
+        length_of_largest_line;
+    string line_buffer,printable_buffer;
+    int c;
+    // ----- reserved -----
+    while (is_navigating)
+    {
+        c = getch();
+
+        length_of_largest_line = 0;
+        number_of_lines =0;
+        werase(win);
+        box(win,0,0);
+        ifstream file_to_read(filepath);
+        if (!file_to_read.is_open())
+        {
+            wattron(win,COLOR_PAIR(RED_PAIR));
+            mvwprintw(win,1,1,"%s",filepath.c_str());
+            wattroff(win,COLOR_PAIR(RED_PAIR));
+            wrefresh (win);
+            is_navigating = false;
+        }
+        while (getline(file_to_read,line_buffer))
+        {
+            if (length_of_largest_line<line_buffer.length())
+                length_of_largest_line = line_buffer.length();
+
+            if (line_buffer.length() <=x_starting_at)
+            {
+                printable_buffer = "";
+            }
+            else if (line_buffer.length() <= x_starting_at+width)
+            {
+                printable_buffer = line_buffer.substr(x_starting_at);
+            }
+            else
+            {
+                printable_buffer = line_buffer.substr(x_starting_at,width);
+            }
+
+
+            if (x_starting_at > 0 && !printable_buffer.empty())
+                printable_buffer[x_starting_at] = '/';
+
+            if (x_starting_at+width < line_buffer.length() &&
+                 !printable_buffer.empty())
+                printable_buffer[printable_buffer.length()-1] = '\\';
+
+            if (number_of_lines > y_starting_at &&
+                 number_of_lines < y_starting_at+height)
+                mvwprintw(win,number_of_lines-y_starting_at,1,
+                    "%s",printable_buffer.c_str());
+            number_of_lines++;
+        }
+        file_to_read.close();
+        wrefresh(win);
+        // ----- keys -----
+        switch (tolower(c))
+        {
+            // ----- vertical -----
+            case 'i':
+            {
+                if (y_starting_at>0)
+                    y_starting_at--;
+            }
+            break;
+            case 'k':
+            {
+                if (y_starting_at+height<number_of_lines-3) // 2 offset + 1 for allowance
+                    y_starting_at++;
+            }
+            break;
+            // ----- vertical -----
+
+            // ----- horizontal -----
+            case 'j':
+            {
+                if (x_starting_at>0)
+                    x_starting_at--;
+            }
+            break;
+            case 'l':
+            {
+                if (x_starting_at+width<length_of_largest_line-3) // 2 offset + 1 for allowance
+                    x_starting_at++;
+            }
+            break;
+            // ----- horizontal -----
+            case 'q':
+            {
+                is_navigating = false;
+                return;
+            }
+            break;
+            default:break;
+        }
+        // ----- keys -----
+    }
 }
 

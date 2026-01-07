@@ -18,7 +18,7 @@
 
 
 #include "tml_render.hpp"
-    
+
 void init_colors()
 {
     // First 8 standard colors
@@ -30,7 +30,7 @@ void init_colors()
     init_pair(CYAN_PAIR, COLOR_CYAN, COLOR_BLACK);
     init_pair(MAGENTA_PAIR, COLOR_MAGENTA, COLOR_BLACK);
     init_pair(WHITE_PAIR, COLOR_WHITE, COLOR_BLACK);
-    
+
     // For extended colors, we need to check terminal support
     if (can_change_color() && COLORS >= 16) {
         // Define custom colors (RGB values 0-1000)
@@ -42,7 +42,7 @@ void init_colors()
         init_color(13, 400, 1000, 400);   // Light Green
         init_color(14, 1000, 800, 0);     // Gold
         init_color(15, 600, 400, 200);    // Brown
-        
+
         // Create pairs for custom colors
         init_pair(GREY_PAIR, 8, COLOR_BLACK);
         init_pair(PINK_PAIR, 9, COLOR_BLACK);
@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
     WINDOW* view = newwin(20,35,10,45);
     refresh();
     // ----- reserved -----
-  
+
     browse_in_current_directory(dir,view,filepath);
     getch();
 
@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
     delwin(view);
     endwin();
     return 0;
-    // ----- reserved ----- 
+    // ----- reserved -----
 }
 
 
@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
 /*
 // special chars
 /// continuation
-// ⤷ ⮩ ⮱ 
+// ⤷ ⮩ ⮱
 /// current line
-// ⮚ 🠊 🠲 🠶 🡆 🡪 🢒 🢥 🢚 ➙ 
+// ⮚ 🠊 🠲 🠶 🡆 🡪 🢒 🢥 🢚 ➙
 */
