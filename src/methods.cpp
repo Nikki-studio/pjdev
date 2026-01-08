@@ -382,10 +382,10 @@ void directory_mode_browse_in_current_file(WINDOW* win,string& filepath)
                  !printable_buffer.empty())
                 printable_buffer[printable_buffer.length()-1] = '\\';
 
-            if (number_of_lines > y_starting_at &&
+            if (number_of_lines >= y_starting_at &&
                  number_of_lines < y_starting_at+height)
             {
-                mvwprintw(win,number_of_lines-y_starting_at,1,
+                mvwprintw(win,number_of_lines-y_starting_at+1,1,
                     "%s",printable_buffer.c_str());
                 if (length_of_largest_line>length_of_largest_visible_line)
                     length_of_largest_line = length_of_largest_visible_line;
@@ -400,7 +400,7 @@ void directory_mode_browse_in_current_file(WINDOW* win,string& filepath)
             // ----- vertical -----
             case 'i':
             {
-                if (y_starting_at>=0)
+                if (y_starting_at>0)
                     y_starting_at--;
             }
             break;
@@ -461,19 +461,19 @@ void directory_mode_browse_in_current_file(WINDOW* win,string& filepath)
         // ----- keys -----
     }
     // ----- reserved -----
-    x_starting_at = 0;
-    y_starting_at = 0;
-    number_of_lines = 0;
-    length_of_largest_line = 0;
-    length_of_largest_visible_line = 0;
-    line_buffer.clear();
-    printable_buffer.clear();
+    // x_starting_at = 0;
+    // y_starting_at = 0;
+    // number_of_lines = 0;
+    // length_of_largest_line = 0;
+    // length_of_largest_visible_line = 0;
+    // line_buffer.clear();
+    // printable_buffer.clear();
     // ----- reserved -----
 }
 
 
 // ----- editors -----
-// \author Joseph Wangai Mwaniki
+// . \author Joseph Wangai Mwaniki
 // .
 // .
 // .
@@ -680,3 +680,46 @@ void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sw
     }
     curs_set(1);
 }
+
+
+void command_mode_write_script(WINDOW* win,string& filepath)
+{}
+
+// ----- read -----
+void load_file_to_buffer(string&buffer,string& filepath)
+{}
+
+// ----- write -----
+void add_char_to_buffer(string& buffer,unsigned int c)
+{}
+
+void remove_chars_from_buffer(string& buffer,bool chars_is_word)
+{}
+
+void move_cursor_at_position_y_x_in_buffer(string& buffer,unsigned int y_pos,unsigned int x_pos)
+{}
+
+void overwrite_buffer_char_at_position_y_x_in_buffer(string& buffer,unsigned int& y_pos,unsigned int& x_pos)
+{}
+
+void append_to_buffer_after_char_at_position_y_x_in_buffer(string&buffer,unsigned int& y_pos,unsigned int& x_pos, unsigned int c)
+{}
+
+// ----- Monitor changes -----
+// ----- Backup & Recovery -----
+void file_write_crash_log(string& buffer,string& filename)
+{}
+
+void file_write_update_file_cache(string& filename)
+{}
+
+void file_write_recover_crashed_from_cache(string& filename)
+{}
+
+// ----- handle different encodings -----
+// ----- add line endings -----
+// ---- lock down subject file -----
+void file_write_update_file_journal(string& filename)
+{}
+// ----- autosave after an amount of time -----
+// impliment later
