@@ -36,7 +36,6 @@ using namespace std;
 namespace fs = filesystem;
 
 
-
 // Color definition
 #define BLACK_PAIR     1
 #define RED_PAIR       2

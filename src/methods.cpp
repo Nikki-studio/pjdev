@@ -137,12 +137,15 @@ void directory_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,string&
 
     directories:
     fs::path current_path(filepath);
+    if (fs::exists(current_path))
+    {
+        current_path = fs::canonical(current_path);
+        filepath = current_path.string();
+    }
     if (!fs::is_directory(current_path))
-        current_path = fs::canonical(current_path.parent_path());
+        current_path = current_path.parent_path();
 
         
-    filepath = current_path.string();
-    filepath = current_path.string();
 
     if (current_path.has_parent_path() && current_path != current_path.root_path())
     {
@@ -189,6 +192,11 @@ void directory_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,string&
         {
             int y_pos = display_index + 1;
 
+            if (filepaths[i].length()>width)
+            {
+                filepaths[i] = filepaths[i].substr(0,width);
+                filepaths[i][width-1] = '\\';
+            }
             if (i == highlighted_file)
             {
                 wattron(dir, COLOR_PAIR(MAGENTA_PAIR) | A_BOLD );
@@ -260,15 +268,18 @@ void directory_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,string&
 
             case 10: // newline -- read or traverse
                 {
-                    if (filepaths[highlighted_file]=="..")
-                        current_path = current_path.parent_path();
-                    else current_path /= filepaths[highlighted_file];
-                    filepath = current_path.string();
-                    if (!is_directory[highlighted_file])
+                    fs::path file_to_read(filepath);
+                    if (fs::exists(file_to_read / filepaths[highlighted_file]))
                     {
-                        auto_read = false;
-                        directory_mode_browse_in_current_file(view,filepath);
-                        break;
+                        file_to_read /= filepaths[highlighted_file];
+                        if (is_directory[highlighted_file])
+                            filepath = file_to_read.string();
+                        else
+                        {
+                            string file_path_to_read(file_to_read);
+                            directory_mode_browse_in_current_file(view,file_path_to_read);
+                            break;
+                        }
                     }
                 }
 
@@ -472,7 +483,6 @@ void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sw
     curs_set(0);
     box(dir,0,0);
     box(view,0,0);
-    box(sweetpatch,0,0);
     unsigned int  max_height, max_width;
     getmaxyx(dir,max_height,max_width);
     unsigned int
@@ -490,12 +500,15 @@ void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sw
 
     directories:
     fs::path current_path(filepath);
+    if (fs::exists(current_path))
+    {
+        current_path = fs::canonical(current_path);
+        filepath = current_path.string();
+    }
     if (!fs::is_directory(current_path))
-        current_path = fs::canonical(current_path.parent_path());
+        current_path = current_path.parent_path();
 
         
-    filepath = current_path.string();
-    filepath = current_path.string();
 
     if (current_path.has_parent_path() && current_path != current_path.root_path())
     {
@@ -527,10 +540,8 @@ void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sw
         // ----- keycheck -----
         werase(dir);
         werase(view);
-        werase(sweetpatch);
         box(dir,0,0);
         box(view,0,0);
-        box(sweetpatch,0,0);
         if (highlighted_file >= total_files && total_files > 0)
             highlighted_file = total_files -1;
         if (highlighted_file < starting_at)
@@ -544,6 +555,11 @@ void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sw
         {
             int y_pos = display_index + 1;
 
+            if (filepaths[i].length()>width)
+            {
+                filepaths[i] = filepaths[i].substr(0,width);
+                filepaths[i][width-1] = '\\';
+            }
             if (i == highlighted_file)
             {
                 wattron(dir, COLOR_PAIR(MAGENTA_PAIR) | A_BOLD );
@@ -565,18 +581,17 @@ void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sw
         if (auto_read)
         {
             fs::path file_to_read(current_path);
-            if (fs::exists(file_to_read / filepaths[highlighted_file]))
+            if (filepaths[highlighted_file]=="..")
+                file_to_read = file_to_read.parent_path();
+            else file_to_read /= filepaths[highlighted_file];
+            if (fs::exists(file_to_read) && !fs::is_directory(file_to_read))
             {
-                file_to_read /= filepaths[highlighted_file];
                 string file_path_to_read(file_to_read.string());
                 glimpse_inside(view,file_path_to_read);
-                file_path_to_read.clear();
             }
-            file_to_read.clear();
         }
         wrefresh(dir);
         wrefresh(view);
-        wrefresh(sweetpatch);
         c = getch();
         switch (tolower(c))
         {
@@ -616,15 +631,18 @@ void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sw
 
             case 10: // newline -- read or traverse
                 {
-                    if (filepaths[highlighted_file]=="..")
-                        current_path = current_path.parent_path();
-                    else current_path /= filepaths[highlighted_file];
-                    filepath = current_path.string();
-                    if (!is_directory[highlighted_file])
+                    fs::path file_to_read(filepath);
+                    if (fs::exists(file_to_read / filepaths[highlighted_file]))
                     {
-                        auto_read = false;
-                        directory_mode_browse_in_current_file(view,filepath);
-                        break;
+                        file_to_read /= filepaths[highlighted_file];
+                        if (is_directory[highlighted_file])
+                            filepath = file_to_read.string();
+                        else
+                        {
+                            string file_path_to_read(file_to_read);
+                            directory_mode_browse_in_current_file(view,file_path_to_read);
+                            break;
+                        }
                     }
                 }
 
