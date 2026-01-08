@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
     noecho();
     keypad(stdscr,TRUE);
     raw();
-    //halfdelay(3.33333333333333333333);
+    //halfdelay(THIRD);
     string filepath(".");
     // ----- reserved -----
 
@@ -111,37 +111,49 @@ int main(int argc, char* argv[])
         cerr << "Your terminal width is too cramped!\n";
         return 1;
     }
-    int dir_width = width /3;
+    int dir_width = width * THIRD;
     if (height>min_height)
     {
         head = newwin(4,width,0,0);
-        dir = newwin(height-8,dir_width,4,0);
-        view = newwin(height-8,width - dir_width,4,floor(width/3));
-        lines = newwin(height-8,6,4,0);
-        editor = newwin(height-8,width-6,4,6);
+        if (current_window_mode == window_modes::RWX_MODE)
+        {
+            lines = newwin(height-8,6,4,0);
+            editor = newwin(height-8,width-6,4,6);
+        }
+        else
+        {
+            dir = newwin(height-8,dir_width,4,0);
+            view = newwin(height-8,width - dir_width,4,dir_width);
+        }
         sweet_patch = newwin(2,width,height-4,0);
         foot = newwin(2,width,height-2,0);
     }
     else
     {
-        dir = newwin(height-1,dir_width,0,0);
-        view = newwin(height-1,width - dir_width,0,floor(width/3));
-        lines = newwin(height-1,6,0,0);
-        editor = newwin(height-1,width-6,0,6);
+        if (current_window_mode == window_modes::RWX_MODE)
+        {
+            lines = newwin(height-1,6,0,0);
+            editor = newwin(height-1,width-6,0,6);
+        }
+        else
+        {
+            dir = newwin(height-1,dir_width,0,0);
+            view = newwin(height-1,width - dir_width,0,dir_width);
+        }
         sweet_patch = newwin(1,width,height-1,0);
     }
     refresh();
 
     // ----- draw horizontal lines -----
-    // if (head) mvwhline(head,4,0,0,width);
+    if (head) mvwhline(head,3,0,0,width);
     // -------------------------------------------------
     if (dir) box(dir,0,0);
     if (view) box(view,0,0);
-    // if (lines) box(lines,0,0);
-    // if (editor) box(editor,0,0);
+    if (lines) box(lines,0,0);
+    if (editor) box(editor,0,0);
     // if (sweet_patch) box(sweet_patch,0,0);
     // -------------------------------------------------
-    // if (foot) mvwhline(sweet_patch,0,0,0,width);
+    if (foot) mvwhline(sweet_patch,0,0,0,width);
     // ----- draw horizontal lines -----
 
     // ----- refresh -----
@@ -155,6 +167,7 @@ int main(int argc, char* argv[])
     // ----- refresh -----
 
     // ----- reserved -----
+    directory_mode_browse_in_current_directory(dir,view,filepath);
     refresh();
     getch();
 

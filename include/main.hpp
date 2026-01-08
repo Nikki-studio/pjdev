@@ -55,7 +55,14 @@ namespace fs = filesystem;
 #define GOLD_PAIR      15
 #define BROWN_PAIR     16
 
-
+#define THIRD .333333333333333333333
+typedef enum window_modes
+{
+    RWX_MODE,
+    DIR_MODE,
+    CMD_MODE
+}window_modes;
+static window_modes current_window_mode = window_modes::DIR_MODE;
 static string subject_file_buffer, script_file_buffer;
 
 #endif // MAIN_HPP_INCLUDED

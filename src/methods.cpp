@@ -565,14 +565,14 @@ void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sw
         if (auto_read)
         {
             fs::path file_to_read(current_path);
-            if (filepaths[highlighted_file]=="..")
-                file_to_read = file_to_read.parent_path();
-            else file_to_read /= filepaths[highlighted_file];
-            if (fs::exists(file_to_read) && !fs::is_directory(file_to_read))
+            if (fs::exists(file_to_read / filepaths[highlighted_file]))
             {
+                file_to_read /= filepaths[highlighted_file];
                 string file_path_to_read(file_to_read.string());
                 glimpse_inside(view,file_path_to_read);
+                file_path_to_read.clear();
             }
+            file_to_read.clear();
         }
         wrefresh(dir);
         wrefresh(view);
