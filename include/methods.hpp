@@ -24,6 +24,9 @@ void glimpse_inside(WINDOW* win,string& filepath);
 void glimpse_inside_of_text_file(WINDOW* win,string& filepath);
 void glimpse_inside_of_directory(WINDOW* win,string& filepath);
 
-void browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath);
-void browse_in_current_file(WINDOW* win,string& filepath);
+void directory_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath);
+void directory_mode_browse_in_current_file(WINDOW* win,string& filepath);
+
+
+void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,string& filepath);
 #endif // METHODS_HPP_INCLUDED

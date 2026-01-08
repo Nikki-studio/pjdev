@@ -26,11 +26,11 @@
 #include <filesystem>
 #include <iostream>
 #include <vector>
-#include <ncurses.h>
+#include <ncursesw/ncurses.h>
 #include <fstream>
 #include <cstdarg>
 #include <cstdio>
-
+#include <cmath>
 
 using namespace std;
 namespace fs = filesystem;
@@ -55,5 +55,7 @@ namespace fs = filesystem;
 #define GOLD_PAIR      15
 #define BROWN_PAIR     16
 
+
+static string subject_file_buffer, script_file_buffer;
 
 #endif // MAIN_HPP_INCLUDED
