@@ -26,7 +26,14 @@ void glimpse_inside_of_directory(WINDOW* win,string& filepath);
 
 void directory_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath);
 void directory_mode_browse_in_current_file(WINDOW* win,string& filepath);
+void directory_mode_browse_in_current_file(WINDOW* win,string& filepath);
 
 
 void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,string& filepath);
+void command_mode_write_script(WINDOW* win,string& filepath);
+void add_char_to_buffer(string& buffer,unsigned int c);
+void remove_chars_from_buffer(string& buffer,bool chars_is_word);
+void move_cursor_at_position_y_x_in_buffer(string& buffer,unsigned int y_pos,unsigned int x_pos);
+void overwrite_buffer_char_at_position_y_x_in_buffer(string& buffer,unsigned int& y_pos,unsigned int& x_pos);
+void append_to_buffer_after_char_at_position_y_x_in_buffer(string&buffer,unsigned int& y_pos,unsigned int& x_pos, unsigned int c);
 #endif // METHODS_HPP_INCLUDED

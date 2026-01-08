@@ -104,7 +104,20 @@ void glimpse_inside_of_directory(WINDOW* win,string& filepath)
     auto it = fs::directory_iterator(directory,fs::directory_options::none);
     for (const auto & entry: it)
     {
-        mvwprintw(win,height,2,"%s",entry.path().filename().c_str());
+        if (fs::is_directory(entry))
+        {
+            wattron(win, COLOR_PAIR(GREEN_PAIR) | A_BOLD );
+            mvwprintw(win,height,2,"%s",entry.path().filename().c_str());
+            wattroff(win, COLOR_PAIR(GREEN_PAIR) | A_BOLD );
+        }
+        else if (fs::is_empty(entry))
+        {
+            wattron(win, COLOR_PAIR(GREY_PAIR) | A_REVERSE | A_DIM );
+            mvwprintw(win,height,2,"%s",entry.path().filename().c_str());
+            wattroff(win, COLOR_PAIR(GREY_PAIR) | A_REVERSE | A_DIM );
+        }
+        else
+            mvwprintw(win,height,2,"%s",entry.path().filename().c_str());
         if (height>=max_height-2)
             return;
         height++;
@@ -194,8 +207,8 @@ void directory_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,string&
 
             if (filepaths[i].length()>width)
             {
-                filepaths[i] = filepaths[i].substr(0,width);
-                filepaths[i][width-1] = '\\';
+                filepaths[i] = filepaths[i].substr(0,width-1);
+                filepaths[i][width-2] = '\\';
             }
             if (i == highlighted_file)
             {
@@ -221,7 +234,7 @@ void directory_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,string&
             if (filepaths[highlighted_file]=="..")
                 file_to_read = file_to_read.parent_path();
             else file_to_read /= filepaths[highlighted_file];
-            if (fs::exists(file_to_read) && !fs::is_directory(file_to_read))
+            if (fs::exists(file_to_read))
             {
                 string file_path_to_read(file_to_read.string());
                 glimpse_inside(view,file_path_to_read);
@@ -387,7 +400,7 @@ void directory_mode_browse_in_current_file(WINDOW* win,string& filepath)
             // ----- vertical -----
             case 'i':
             {
-                if (y_starting_at>0)
+                if (y_starting_at>=0)
                     y_starting_at--;
             }
             break;
@@ -461,17 +474,17 @@ void directory_mode_browse_in_current_file(WINDOW* win,string& filepath)
 
 // ----- editors -----
 // \author Joseph Wangai Mwaniki
-// journal file
-// string buffer
-// 
-// 
-// 
-// 
-// 
-// 
-// 
-// 
-// 
+// .
+// .
+// .
+// .
+// .
+// .
+// .
+// .
+// .
+// .
+// ----- editors -----
 
 
 void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,string& filepath)

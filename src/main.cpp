@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
     noecho();
     keypad(stdscr,TRUE);
     raw();
-    //halfdelay(THIRD);
+    halfdelay(10*THIRD);
     string filepath(".");
     // ----- reserved -----
 
