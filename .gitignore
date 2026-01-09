@@ -3,6 +3,7 @@
 bin/
 obj/
 *lab/ 
+.pjdev/
 ## files
 compile_commands*
 *.out

@@ -4,7 +4,7 @@ OBJECTS := $(SOURCES:src/%.cpp=obj/%.o)
 DEPS := $(OBJECTS:.o=.d)
 
 CXX := g++
-CXXFLAGS  := -g -Iinclude -O3 -MMD -MP -Werror
+CXXFLAGS  := -g -Iinclude -O3 -MMD -MP # -Wall -Wextra -Wpedantic -Werror 
 LDFLAGS := -lncursesw
 
 MAKEFLAGS := --no-builtin-rules --no-builtin--variables
