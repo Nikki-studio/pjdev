@@ -46,7 +46,8 @@ void glimpse_inside(WINDOW* win,string& filepath)
 
     if (fs::is_directory(inode))
     {
-        glimpse_inside_of_directory(win,filepath,filepath);
+        unsigned int total_number_of_lines = 0;
+        glimpse_inside_of_directory(win,filepath,filepath,total_number_of_lines);
         return;
     }
     else
@@ -95,36 +96,38 @@ void glimpse_inside_of_text_file(WINDOW* win,string& filepath)
     text_file.close();
 }
 
-unsigned int glimpse_inside_of_directory(WINDOW* win,string& filepath,
-                                unsigned int& higlighted_file, 
+void glimpse_inside_of_directory(WINDOW* win,string& filepath,
                                 string &highlighted_file_path,
+                                unsigned int& total_number_of_files,
+                                unsigned int highlighted_file,
                                 unsigned int starting_at,
                                 bool is_in_navigation_mode)
 {
     //mvwprintw(win,1,1,"This is a directory");
     unsigned int  max_height, max_width;
     getmaxyx(win,max_height,max_width);
-    unsigned int height = (max_height - 2),width = (max_height - 2),pointer=0;
+    unsigned int height = (max_height - 2),width = (max_width - 2),pointer=0;
     if (!is_in_navigation_mode)
         starting_at = 0;
-    fs::path directory(filepath);
+    fs::path directory(fs::relative(filepath));
     auto it = fs::directory_iterator(directory,fs::directory_options::skip_permission_denied);
     try
     {
         for (const auto & entry: it)
         {
             string subject_path(entry.path().string());
-            if (subject_path.length()<=width)
+            if (subject_path.length()>=width)
             {
-                subject_path = subject_path.substr(0,width);
-                subject_path[subject_path.length()-1] = '\\';
+                subject_path = subject_path.substr(0,width-1);
+                subject_path[subject_path.length()-2] = '\\';
             }
             if (pointer >= starting_at && pointer < starting_at+height)
             {
-                if (pointer == higlighted_file)
+                if (pointer == highlighted_file && is_in_navigation_mode)
                 {
+                    highlighted_file_path = entry.path().filename().string();
                     wattron(win,COLOR_PAIR(MAGENTA_PAIR)|A_BOLD|A_UNDERLINE);
-                    mvwprintw(win,pointer,2,"%s",subject_path.c_str());
+                    mvwprintw(win,pointer+1,2,"%s",subject_path.c_str());
                     wattroff(win,COLOR_PAIR(MAGENTA_PAIR)|A_BOLD|A_UNDERLINE);
                 }
                 else
@@ -132,32 +135,35 @@ unsigned int glimpse_inside_of_directory(WINDOW* win,string& filepath,
                     if (fs::is_directory(entry))
                     {
                         wattron(win,COLOR_PAIR(GREEN_PAIR)|A_BOLD);
-                        mvwprintw(win,pointer,2,"%s",subject_path.c_str());
+                        mvwprintw(win,pointer+1,2,"%s",subject_path.c_str());
                         wattroff(win,COLOR_PAIR(GREEN_PAIR)|A_BOLD);
                     }
                     else if (fs::is_empty(entry))
                     {
                         wattron(win,COLOR_PAIR(GREY_PAIR)|A_REVERSE);
-                        mvwprintw(win,pointer,2,"%s",subject_path.c_str());
+                        mvwprintw(win,pointer+1,2,"%s",subject_path.c_str());
                         wattroff(win,COLOR_PAIR(GREY_PAIR)|A_REVERSE);
                     }
                     else
-                        mvwprintw(win,pointer,2,"%s",subject_path.c_str());
+                        mvwprintw(win,pointer+1,2,"%s",subject_path.c_str());
                 }
             }
-            else if(pointer>starting_at+height) return;
             pointer++;
         }
+        total_number_of_files = pointer;
     }
     catch (const fs::filesystem_error& e)
     {
-        //cerr << "permission denied"<< e.what()<<endl;
+        wattron(win,COLOR_PAIR(RED_PAIR));
+        mvwprintw(win, 1,2,"Error in reading directory.");
+        wattroff(win,COLOR_PAIR(RED_PAIR));
+        wrefresh(win);
     }
 }
 
 void browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,string& filepath)
 {
-    // p for parent, q for quit,enter for read or traverse
+    // { for parent, } for child path, q for quit,enter for read or traverse
     // a for autoread toggle, r for new refresh
     // arrowkeys for dir navigation
     // ----- reserved -----
@@ -170,111 +176,58 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,stri
         height = max_height -2,
         width = max_width -2,
         highlighted_file = 3,
-        starting_at = 0;
+        starting_at = 0,
+        total_number_of_files = 0;
     string highlighted_file_path;
     bool is_focused_in_dir = true;
     bool auto_read = true;
     int c;
-    vector<string> filepaths;
-    vector<bool> is_directory;
 
-    directories:
     fs::path current_path(filepath);
     if (fs::exists(current_path))
     {
         current_path = fs::canonical(current_path);
         filepath = current_path.string();
     }
-    if (!fs::is_directory(current_path))
-        current_path = current_path.parent_path();
-
-        
 
 
-    if (current_path.has_parent_path() && current_path != current_path.root_path())
-    {
-        filepaths.push_back("..");
-        is_directory.push_back(true);
-    }
-
-    try
-    {
-        for (const auto& entry:fs::
-            directory_iterator(current_path,
-                fs::directory_options::skip_permission_denied))
-        {
-            filepaths.push_back(entry.path().filename().string());
-            is_directory.push_back(entry.is_directory());
-        }
-    }
-    catch (const fs::filesystem_error& e)
-    {
-        wattron(dir,COLOR_PAIR(RED_PAIR));
-        mvwprintw(dir, 1,2,"Error in reading directory.");
-        wattroff(dir,COLOR_PAIR(RED_PAIR));
-        wrefresh(dir);
-    }
-    int total_files = filepaths.size();
+    glimpse_inside_of_directory(dir,filepath,highlighted_file_path,total_number_of_files,highlighted_file,starting_at,true);
     // ----- reserved -----
     while (is_focused_in_dir)
     {
         // ----- keycheck -----
         werase(dir);
         werase(view);
+        werase(sweetpatch);
         box(dir,0,0);
         box(view,0,0);
-        if (highlighted_file >= total_files && total_files > 0)
-            highlighted_file = total_files -1;
+        box(sweetpatch,0,0);
+        mvwprintw(sweetpatch,0,0,"%s",highlighted_file_path.c_str());
+        if (highlighted_file >= total_number_of_files && total_number_of_files > 0)
+            highlighted_file = total_number_of_files -1;
         if (highlighted_file < starting_at)
             starting_at = highlighted_file;
         else if (highlighted_file >= starting_at + height)
             starting_at = highlighted_file - height + 1;
 
 
-        // win,
-        int display_index = 0;
-        for (size_t i = starting_at;
-            i < filepaths.size() && display_index < height;
-            i++,display_index++)
-        {
-            int y_pos = display_index + 1;
 
-            if (filepaths[i].length()>width)
-            {
-                filepaths[i] = filepaths[i].substr(0,width-1);
-                filepaths[i][width-2] = '\\';
-            }
-            if (i == highlighted_file)
-            {
-                wattron(dir, COLOR_PAIR(MAGENTA_PAIR) | A_BOLD );
-                mvwprintw(dir,y_pos,2,"%s",filepaths[i].c_str());
-                wattroff(dir, COLOR_PAIR(MAGENTA_PAIR) | A_BOLD);
-            }
-            else
-            {
-                if (is_directory[i])
-                {
-                    wattron(dir, COLOR_PAIR(GREEN_PAIR) );
-                    mvwprintw(dir,y_pos,2,"%s",filepaths[i].c_str());
-                    wattroff(dir, COLOR_PAIR(GREEN_PAIR));
-                }
-                else
-                    mvwprintw(dir,y_pos,2,"%s",filepaths[i].c_str());
-            }
-        }
+        glimpse_inside_of_directory(dir,filepath,highlighted_file_path,total_number_of_files,highlighted_file,starting_at,true);
 
 
 
         if (auto_read)
         {
             fs::path file_to_read(current_path);
-            if (filepaths[highlighted_file]=="..")
-                file_to_read = file_to_read.parent_path();
-            else file_to_read /= filepaths[highlighted_file];
+
+            file_to_read /= highlighted_file_path;
             if (fs::exists(file_to_read))
             {
                 string file_path_to_read(file_to_read.string());
-                glimpse_inside(view,file_path_to_read);
+                if (fs::is_directory(file_to_read))
+                    glimpse_inside_of_directory(view,file_path_to_read,highlighted_file_path,total_number_of_files);
+                else
+                    glimpse_inside(view,file_path_to_read);
             }
         }
         wrefresh(dir);
@@ -299,19 +252,33 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,stri
             case KEY_RIGHT:
             case KEY_DOWN:
                 {
-                    if (highlighted_file <= filepaths.size()-1) highlighted_file++;
+                    if (highlighted_file <= total_number_of_files-1) highlighted_file++;
                 }
                 break;
 
-            case 'p':
+            case '{':
                 {
                     if (current_path.has_parent_path())
                     {
+                        highlighted_file_path = current_path.relative_path().string();
                         current_path = current_path.parent_path();
                         filepath = current_path.string();
-                        filepaths.clear();
-                        is_directory.clear();
-                        goto directories;
+                    }
+                }
+                break;
+            case '}':
+                {
+                    if (current_path.has_parent_path())
+                    {
+                        fs::path file_to_read(current_path);
+
+                        file_to_read /= highlighted_file_path;
+                        if (fs::exists(file_to_read))
+                        {
+                            current_path = file_to_read.parent_path();
+                            if (!fs::is_directory(current_path)) current_path = current_path.parent_path();
+                            filepath = current_path.string();
+                        }
                     }
                 }
                 break;
@@ -319,25 +286,29 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,stri
             case 10: // newline -- read or traverse
                 {
                     fs::path file_to_read(filepath);
-                    if (fs::exists(file_to_read / filepaths[highlighted_file]))
+                    if (fs::exists(file_to_read / fs::relative(highlighted_file_path)))
                     {
-                        file_to_read /= filepaths[highlighted_file];
-                        if (is_directory[highlighted_file])
-                            filepath = file_to_read.string();
+                        file_to_read /= fs::relative(highlighted_file_path);
+
+                        if (fs::is_directory(highlighted_file_path))
+                        {
+                            current_path = file_to_read;
+                            filepath = current_path.string();
+                            glimpse_inside_of_directory(dir,filepath,highlighted_file_path,total_number_of_files);
+                        }
                         else
                         {
                             string file_path_to_read(file_to_read);
                             directory_mode_browse_in_current_file(view,file_path_to_read);
-                            break;
                         }
+
                     }
                 }
+                break;
 
             case 'r': // refresh
                 {
-                    if (!filepaths.empty()) filepaths.clear();
-                    if (!is_directory.empty()) is_directory.clear();
-                        goto directories;
+                    glimpse_inside_of_directory(dir,filepath,highlighted_file_path,total_number_of_files,highlighted_file,starting_at,true);
                 }
                 break;
 
@@ -372,7 +343,7 @@ void directory_mode_browse_in_current_file(WINDOW* win,string& filepath)
         y_starting_at = 0,
         number_of_lines,
         length_of_largest_line,
-        length_of_largest_visible_line;
+        length_of_largest_visible_line = 0;
     string line_buffer,printable_buffer;
     int c;
     // ----- reserved -----
@@ -507,6 +478,8 @@ void directory_mode_browse_in_current_file(WINDOW* win,string& filepath)
     // printable_buffer.clear();
     // ----- reserved -----
 }
+
+
 
 // ----- editors -----
 // . \author Joseph Wangai Mwaniki

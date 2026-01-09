@@ -20,13 +20,21 @@
 #define METHODS_HPP_INCLUDED
 #include "main.hpp"
 void view_when_error(WINDOW win);
-void glimpse_inside (WINDOW* win,string& filepath);
 void glimpse_inside_of_text_file(WINDOW* win,string& filepath);
-unsigned int glimpse_inside_of_directory(WINDOW* win,string& filepath, string& highlighted_file_path,unsigned int higlighted_file = 0,unsigned int starting_at = 0,bool is_in_navigation_mode = false);
+void glimpse_inside_of_directory(WINDOW* win,string& filepath, string& highlighted_file_path,
+    unsigned int& total_number_of_files,unsigned int highlighted_file = 0,unsigned int starting_at = 0,
+    bool is_in_navigation_mode = false);
+void glimpse_inside (WINDOW* win,string& filepath);
 
 void browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,string& filepath);
 void directory_mode_browse_in_current_file(WINDOW* win,string& filepath);
-void directory_mode_browse_in_current_file(WINDOW* win,string& filepath);
+
+/*
+void navigate_directory(WINDOW* win, fs::path& current_path,string& filepath,string& highlighted_file_path,
+    unsigned int& total_number_of_files,int c,
+    unsigned int highlighted_file = 0,
+    unsigned int starting_at = 0,bool is_in_navigation_mode = false);
+    */
 
 void command_mode_write_script(WINDOW* win,string& filepath);
 // ----- read -----
@@ -36,7 +44,8 @@ void add_char_to_buffer(string& buffer,unsigned int c);
 void remove_chars_from_buffer(string& buffer,bool chars_is_word);
 void move_cursor_at_position_y_x_in_buffer(string& buffer,unsigned int y_pos,unsigned int x_pos);
 void overwrite_buffer_char_at_position_y_x_in_buffer(string& buffer,unsigned int& y_pos,unsigned int& x_pos);
-void append_to_buffer_after_char_at_position_y_x_in_buffer(string&buffer,unsigned int& y_pos,unsigned int& x_pos, unsigned int c);
+void append_to_buffer_after_char_at_position_y_x_in_buffer(string&buffer,unsigned int& y_pos,
+    unsigned int& x_pos, unsigned int c);
 // ----- Monitor changes -----
 // ----- Backup & Recovery -----
 void file_write_crash_log(string& buffer,string& filename);
