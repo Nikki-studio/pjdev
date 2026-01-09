@@ -4,6 +4,7 @@ bin/
 obj/
 *lab/ 
 .pjdev/
+debug/
 ## files
 compile_commands*
 *.out
