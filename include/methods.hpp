@@ -22,14 +22,12 @@
 void view_when_error(WINDOW win);
 void glimpse_inside (WINDOW* win,string& filepath);
 void glimpse_inside_of_text_file(WINDOW* win,string& filepath);
-void glimpse_inside_of_directory(WINDOW* win,string& filepath);
+unsigned int glimpse_inside_of_directory(WINDOW* win,string& filepath, string& highlighted_file_path,unsigned int higlighted_file = 0,unsigned int starting_at = 0,bool is_in_navigation_mode = false);
 
-void directory_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,string& filepath);
+void browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,string& filepath);
 void directory_mode_browse_in_current_file(WINDOW* win,string& filepath);
 void directory_mode_browse_in_current_file(WINDOW* win,string& filepath);
 
-
-void command_mode_browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,string& filepath);
 void command_mode_write_script(WINDOW* win,string& filepath);
 // ----- read -----
 void load_file_to_buffer(string&buffer,string& filepath);

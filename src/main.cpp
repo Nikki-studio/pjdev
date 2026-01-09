@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
     // ----- refresh -----
 
     // ----- reserved -----
-    directory_mode_browse_in_current_directory(dir,view,filepath);
+    browse_in_current_directory(dir,view,sweet_patch,filepath);
     refresh();
     getch();
 
