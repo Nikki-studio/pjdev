@@ -57,12 +57,14 @@ namespace fs = filesystem;
 
 #define THIRD .333333333333333333333
 
-#define KEY_ESC 27
+#define MY_KEY_ESC 27
 typedef enum window_modes
 {
+    LOWER_WINDOW_MODE_BORDER,
     RWX_MODE,
     DIR_MODE,
-    CMD_MODE
+    CMD_MODE,
+    HIGHER_WINDOW_MODE_BORDER
 }window_modes;
 
 static window_modes current_window_mode = window_modes::DIR_MODE;

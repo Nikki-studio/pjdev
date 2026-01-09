@@ -251,9 +251,11 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,stri
         switch (tolower(c))
         {
             // ----- switch modes -----
-            case KEY_ESC:
+            case MY_KEY_ESC:
                 {
-                    is_focused_in_dir = false;
+                    if (current_window_mode < window_modes::HIGHER_WINDOW_MODE_BORDER)
+                        current_window_mode = static_cast<window_modes>(current_window_mode+1);
+                    else current_window_mode = static_cast<window_modes>(window_modes::LOWER_WINDOW_MODE_BORDER+1);
                 }
                 break;
             // ----- switch modes -----
