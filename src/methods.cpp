@@ -46,8 +46,9 @@ void glimpse_inside(WINDOW* win,string& filepath)
 
     if (fs::is_directory(inode))
     {
-        unsigned int total_number_of_lines = 0;
-        glimpse_inside_of_directory(win,filepath,filepath,total_number_of_lines);
+        unsigned int dummy = 0;
+        string dummy_highlight = "";
+        glimpse_inside_of_directory(win,filepath,dummy_highlight,dummy,dummy,dummy,false);
     }
     else
         glimpse_inside_of_text_file(win,filepath);
@@ -223,7 +224,7 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,stri
 
 
 
-        if (auto_read)
+        if (auto_read && current_window_mode == window_modes::DIR_MODE)
         {
             fs::path file_to_read(current_path);
 
@@ -231,8 +232,15 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,stri
             {
                 file_to_read /= highlighted_file_path;
                 string file_path_to_read(file_to_read.string());
+                unsigned int dummy = 0;
+                string dummy_highlight = "s";
                 if (fs::is_directory(file_to_read))
-                    glimpse_inside_of_directory(view,file_path_to_read,highlighted_file_path,total_number_of_files);
+                    glimpse_inside_of_directory(
+                        view,
+                        file_path_to_read,
+                        dummy_highlight,
+                        dummy,
+                        dummy);
                 else
                     glimpse_inside(view,file_path_to_read);
             }
@@ -242,6 +250,14 @@ void browse_in_current_directory(WINDOW* dir,WINDOW* view,WINDOW*sweetpatch,stri
         c = getch();
         switch (tolower(c))
         {
+            // ----- switch modes -----
+            case KEY_ESC:
+                {
+                    is_focused_in_dir = false;
+                }
+                break;
+            // ----- switch modes -----
+                
             case 'q':
                 {
                     is_focused_in_dir = false;
@@ -498,12 +514,40 @@ void directory_mode_browse_in_current_file(WINDOW* win,string& filepath)
 // .
 // ----- editors -----
 
-void command_mode_write_script(WINDOW* win,string& filepath)
+void command_mode_write_script(WINDOW* win,WINDOW* sweetpatch,string& filepath)
 {}
 
 // ----- read -----
-void load_file_to_buffer(string&buffer,string& filepath)
-{}
+bool load_file_to_buffer(WINDOW* win,string&buffer,string& filepath)
+{
+    unsigned int max_width = static_cast<unsigned int>(getmaxx(win));
+    unsigned int width = max_width - 2;
+    vector<string> error_msgs = {
+        "File not opened. Check file permissions if file exists."
+        "File not read. Check file permissions if file exists else your memory has run out."
+    };
+    
+    ifstream file (filepath, ios::binary|ios::ate);
+    if (!file.is_open())
+    {
+        wattron(win,COLOR_PAIR(RED_PAIR));
+        string error_msg = error_msgs[0].substr(0,width-3);
+        error_msg.push_back('\\');
+        mvwprintw(win,0,2,"%s",error_msg);
+        return false;
+    }
+    streamsize size = file.tellg(); // get file size
+    file.seekg(0,ios::beg); // go to the begining of the file for parsing
+    script_file_buffer.resize(size);
+    if (!file.read(&script_file_buffer[0],size))
+    {
+        wattron(win,COLOR_PAIR(RED_PAIR));
+        string error_msg = error_msgs[1].substr(0,width-3);
+        error_msg.push_back('\\');
+        mvwprintw(win,0,2,"%s",error_msg);
+        return false;
+    }
+}
 
 // ----- write -----
 void add_char_to_buffer(string& buffer,unsigned int c)

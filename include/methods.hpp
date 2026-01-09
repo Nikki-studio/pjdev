@@ -22,7 +22,9 @@
 void view_when_error(WINDOW win);
 void glimpse_inside_of_text_file(WINDOW* win,string& filepath);
 void glimpse_inside_of_directory(WINDOW* win,string& filepath, string& highlighted_file_path,
-    unsigned int& total_number_of_files,unsigned int highlighted_file = 0,unsigned int starting_at = 0,
+    unsigned int& total_number_of_files,
+    unsigned int highlighted_file,
+    unsigned int starting_at = 0,
     bool is_in_navigation_mode = false);
 void glimpse_inside (WINDOW* win,string& filepath);
 
@@ -36,9 +38,9 @@ void navigate_directory(WINDOW* win, fs::path& current_path,string& filepath,str
     unsigned int starting_at = 0,bool is_in_navigation_mode = false);
     */
 
-void command_mode_write_script(WINDOW* win,string& filepath);
+void command_mode_write_script(WINDOW* win,WINDOW* sweetpatch,string& filepath);
 // ----- read -----
-void load_file_to_buffer(string&buffer,string& filepath);
+bool load_file_to_buffer(WINDOW* win,string&buffer,string& filepath);
 // ----- write -----
 void add_char_to_buffer(string& buffer,unsigned int c);
 void remove_chars_from_buffer(string& buffer,bool chars_is_word);

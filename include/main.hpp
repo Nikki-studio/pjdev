@@ -56,13 +56,16 @@ namespace fs = filesystem;
 #define BROWN_PAIR     16
 
 #define THIRD .333333333333333333333
+
+#define KEY_ESC 27
 typedef enum window_modes
 {
     RWX_MODE,
     DIR_MODE,
     CMD_MODE
 }window_modes;
+
 static window_modes current_window_mode = window_modes::DIR_MODE;
-static string subject_file_buffer, script_file_buffer,script_path;
+static string subject_file_buffer, script_file_buffer,script_path = ".pjdev/main.sh";
 
 #endif // MAIN_HPP_INCLUDED
